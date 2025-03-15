@@ -8,22 +8,32 @@ A backend API using Node.js, Express, Sequelize (PostgreSQL), and Socket.io for 
 - Inventory item management with associations to users
 - RESTful API endpoints for CRUD operations
 - Real-time inventory updates using Socket.io
+- Authentication with JWT, OAuth (Discord)
+- User sessions with refresh tokens
 
 ## API Endpoints
 
+### Authentication
+
+- `POST /auth/register` - Register with email/password
+- `POST /auth/login` - Login with email/password
+- `GET /auth/discord` - Login/register via Discord OAuth
+- `POST /auth/refresh-token` - Get a new access token
+- `POST /auth/logout` - Revoke refresh token
+
 ### Users
 
-- `GET /users` - Get all users
-- `POST /users` - Create a user
-- `GET /users/:id` - Get a user with their inventory
-- `DELETE /users/:id` - Delete a user (cascade deletes their items)
+- `GET /users` - Get all users (protected)
+- `POST /users` - Create a user (protected)
+- `GET /users/:id` - Get a user with their inventory (protected)
+- `DELETE /users/:id` - Delete a user (cascade deletes their items) (protected)
 
 ### Items
 
-- `POST /items` - Create an item for a user
-- `GET /items/:id` - Get a single item
-- `PUT /items/:id` - Update an item
-- `DELETE /items/:id` - Delete an item
+- `POST /items` - Create an item for a user (protected)
+- `GET /items/:id` - Get a single item (protected)
+- `PUT /items/:id` - Update an item (protected)
+- `DELETE /items/:id` - Delete an item (protected)
 
 ## WebSocket Events
 
@@ -39,16 +49,35 @@ A backend API using Node.js, Express, Sequelize (PostgreSQL), and Socket.io for 
 - `itemDeleted` - Emitted when an item is removed from a user's inventory
 - `userDeleted` - Emitted when a user is deleted
 
+## Authentication
+
+### JWT Authentication
+
+The API uses JSON Web Tokens (JWT) for authentication. When a user registers or logs in, they receive an access token and a refresh token. The access token is short-lived and should be included in the Authorization header of API requests. The refresh token is long-lived and can be used to obtain a new access token when the current one expires.
+
+### OAuth Authentication
+
+The API supports OAuth authentication with Discord. Users can register and log in using their Discord account. The API will create a new user account if one doesn't exist for the Discord user ID.
+
+### Protected Routes
+
+All routes except for authentication routes are protected and require a valid JWT token in the Authorization header:
+
+```
+Authorization: Bearer your-jwt-token
+```
+
 ## Getting Started
 
 ### Running with Docker Compose
 
 1. Set up environment variables in `.env`:
    ```
-   POSTGRES_DB=inventory
-   POSTGRES_USER=your_username
-   POSTGRES_PASSWORD=your_password
-   PORT=3000
+   # Copy the example file
+   cp .env.example .env
+   
+   # Edit the file with your values
+   nano .env
    ```
 
 2. Start the services:
@@ -77,10 +106,11 @@ A backend API using Node.js, Express, Sequelize (PostgreSQL), and Socket.io for 
 
 2. Set up environment variables in `.env`:
    ```
-   POSTGRES_DB=inventory
-   POSTGRES_USER=your_username
-   POSTGRES_PASSWORD=your_password
-   PORT=3000
+   # Copy the example file
+   cp .env.example .env
+   
+   # Edit the file with your values
+   nano .env
    ```
 
 3. Run database migrations:
@@ -129,4 +159,89 @@ socket.emit('unsubscribeFromInventory', 'user-uuid');
 
 // Disconnect from the WebSocket server
 socket.disconnect();
+```
+
+## Example Authentication Usage
+
+### Register a new user
+
+```javascript
+const response = await fetch('http://localhost:3000/auth/register', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    username: 'testuser',
+    email: 'test@example.com',
+    password: 'password123',
+    firstName: 'Test',
+    lastName: 'User'
+  })
+});
+
+const data = await response.json();
+// data contains user info, access token, and refresh token
+```
+
+### Login with email/password
+
+```javascript
+const response = await fetch('http://localhost:3000/auth/login', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    email: 'test@example.com',
+    password: 'password123'
+  })
+});
+
+const data = await response.json();
+// data contains user info, access token, and refresh token
+```
+
+### Making authenticated requests
+
+```javascript
+const response = await fetch('http://localhost:3000/users', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${accessToken}`
+  }
+});
+
+const users = await response.json();
+```
+
+### Refreshing an access token
+
+```javascript
+const response = await fetch('http://localhost:3000/auth/refresh-token', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    refreshToken: 'your-refresh-token'
+  })
+});
+
+const data = await response.json();
+// data contains a new access token
+```
+
+### Logging out
+
+```javascript
+const response = await fetch('http://localhost:3000/auth/logout', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    refreshToken: 'your-refresh-token'
+  })
+});
 ```

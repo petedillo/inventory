@@ -2,12 +2,18 @@ const express = require('express');
 const router = express.Router();
 const userRoutes = require('./userRoutes');
 const itemRoutes = require('./itemRoutes');
+const authRoutes = require('./authRoutes');
+const { isAuthenticated } = require('../middleware/auth');
 
 router.get('/', (req, res) => {
     res.send('Inventory API is running');
 });
 
-router.use('/users', userRoutes);
-router.use('/items', itemRoutes);
+// Public routes
+router.use('/auth', authRoutes);
+
+// Protected routes
+router.use('/users', isAuthenticated, userRoutes);
+router.use('/items', isAuthenticated, itemRoutes);
 
 module.exports = router;
