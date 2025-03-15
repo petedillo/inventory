@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      args:
+        - NODE_ENV=development
+      context: .
+      target: development
+    command: sh -c "npm run watch"
+    environment:
+      NODE_ENV: development
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: ${POSTGRES_DB}
+      DB_HOST: postgres
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+      - "9230:9230"
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
