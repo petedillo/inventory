@@ -17,4 +17,4 @@ COPY . .
 RUN npm install -g nodemon
 
 # Start the application with Nodemon
-CMD [ "npm", "run", "watch" ]
+CMD [ "npm", "run", "dev" ]
