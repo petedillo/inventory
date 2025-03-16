@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Item extends Model {
+  class Character extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,18 +11,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Item.belongsTo(models.User, {
+      Character.belongsTo(models.User, {
         foreignKey: 'userId',
         onDelete: 'CASCADE'
       });
-      Item.belongsTo(models.Character, {
+      Character.hasMany(models.Item, {
         foreignKey: 'characterId',
-        as: 'equippedTo',
-        onDelete: 'SET NULL'
+        as: 'equippedItems'
       });
     }
   }
-  Item.init({
+  Character.init({
     id: {
       type: DataTypes.UUID,
       defaultValue: DataTypes.UUIDV4,
@@ -32,21 +31,21 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    description: {
-      type: DataTypes.STRING,
-      allowNull: true
+    class: {
+      type: DataTypes.ENUM('Mage', 'Warrior', 'Archer'),
+      allowNull: false
     },
-    strengthBuff: {
+    strength: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 10
     },
-    agilityBuff: {
+    agility: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 10
     },
-    intelligenceBuff: {
+    intelligence: {
       type: DataTypes.INTEGER,
-      defaultValue: 0
+      defaultValue: 10
     },
     userId: {
       type: DataTypes.UUID,
@@ -55,18 +54,10 @@ module.exports = (sequelize, DataTypes) => {
         model: 'Users',
         key: 'id'
       }
-    },
-    characterId: {
-      type: DataTypes.UUID,
-      allowNull: true,
-      references: {
-        model: 'Characters',
-        key: 'id'
-      }
     }
   }, {
     sequelize,
-    modelName: 'Item',
+    modelName: 'Character',
   });
-  return Item;
+  return Character;
 }; 
