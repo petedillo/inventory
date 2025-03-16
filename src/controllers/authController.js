@@ -60,7 +60,6 @@ const register = async (req, res) => {
       password, // Will be hashed by the model hook
       firstName,
       lastName,
-      oauthProvider: 'local',
       refreshToken
     });
     
@@ -112,13 +111,6 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     
-    // Check if user is using local auth
-    if (user.oauthProvider !== 'local') {
-      return res.status(400).json({ 
-        error: `This account uses ${user.oauthProvider} authentication. Please sign in with ${user.oauthProvider}.` 
-      });
-    }
-    
     // Validate password
     const isPasswordValid = await user.validatePassword(password);
     
@@ -150,30 +142,6 @@ const login = async (req, res) => {
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ error: 'Failed to login' });
-  }
-};
-
-// Handle OAuth login/register (called after passport authentication)
-const oauthCallback = (req, res) => {
-  try {
-    // User is already authenticated by passport
-    const user = req.user;
-    
-    // Generate new refresh token
-    const refreshToken = generateRefreshToken();
-    
-    // Update user's refresh token
-    user.update({ refreshToken });
-    
-    // Generate access token
-    const token = generateToken(user);
-    
-    // Redirect to frontend with tokens
-    // In a real app, you might want to use a more secure approach
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/callback?token=${token}&refreshToken=${refreshToken}&userId=${user.id}`);
-  } catch (error) {
-    console.error('Error in OAuth callback:', error);
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth/error`);
   }
 };
 
@@ -241,7 +209,6 @@ const logout = async (req, res) => {
 module.exports = {
   register,
   login,
-  oauthCallback,
   refreshToken,
   logout
 }; 

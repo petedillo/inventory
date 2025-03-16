@@ -13,6 +13,10 @@ RUN rm -rf package-lock.json
 
 COPY . .
 
+# Completely reinstall bcrypt
+RUN npm uninstall bcrypt
+RUN npm install bcrypt
+
 # Install nodemon globally
 RUN npm install -g nodemon
 

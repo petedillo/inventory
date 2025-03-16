@@ -47,15 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: true // Nullable for OAuth users
-    },
-    oauthProvider: {
-      type: DataTypes.ENUM('local', 'discord'),
-      defaultValue: 'local'
-    },
-    oauthId: {
-      type: DataTypes.STRING,
-      allowNull: true
+      allowNull: false
     },
     refreshToken: {
       type: DataTypes.STRING,
