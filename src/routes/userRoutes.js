@@ -66,7 +66,15 @@ router.get('/:id', async (req, res) => {
 // Delete a user (cascade deletes their items)
 router.delete('/:id', async (req, res) => {
     try {
-        const user = await User.findByPk(req.params.id);
+        const userId = req.params.id;
+        const authenticatedUserId = req.user.id;
+
+        // Check if the authenticated user is the same as the user to be deleted
+        if (userId !== authenticatedUserId) {
+            return res.status(403).json({ error: 'You can only delete your own account' });
+        }
+
+        const user = await User.findByPk(userId);
         
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
@@ -75,7 +83,7 @@ router.delete('/:id', async (req, res) => {
         await user.destroy();
         
         // Notify all clients subscribed to this user's inventory
-        req.io.to(`inventory-${req.params.id}`).emit('userDeleted', { userId: req.params.id });
+        req.io.to(`inventory-${userId}`).emit('userDeleted', { userId });
         
         res.status(204).send();
     } catch (error) {
