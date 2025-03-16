@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const db = require('../../models');
-const { User } = db;
+const { User, Character, Item } = db;
 
 // Load environment variables
 require('dotenv').config();
@@ -32,11 +32,16 @@ const generateRefreshToken = () => {
 // Register a new user
 const register = async (req, res) => {
   try {
-    const { username, email, password, firstName, lastName } = req.body;
+    const { username, email, password, firstName, lastName, characterClass = 'Warrior' } = req.body;
     
     // Validate required fields
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
+    
+    // Validate character class if provided
+    if (characterClass && !['Mage', 'Warrior', 'Archer'].includes(characterClass)) {
+      return res.status(400).json({ error: 'Character class must be Mage, Warrior, or Archer' });
     }
     
     // Check if user already exists
@@ -63,10 +68,49 @@ const register = async (req, res) => {
       refreshToken
     });
     
+    // Create default character based on chosen class
+    const character = await Character.create({
+      name: `${username}'s ${characterClass}`,
+      class: characterClass,
+      userId: user.id
+    });
+    
+    // Create starter item based on class
+    let starterItem;
+    switch (characterClass) {
+      case 'Mage':
+        starterItem = await Item.create({
+          name: 'Broken Wand',
+          description: 'A wand that has seen better days',
+          intelligenceBuff: 2,
+          userId: user.id,
+          characterId: character.id
+        });
+        break;
+      case 'Warrior':
+        starterItem = await Item.create({
+          name: 'Old Sword',
+          description: 'A rusty but functional sword',
+          strengthBuff: 2,
+          userId: user.id,
+          characterId: character.id
+        });
+        break;
+      case 'Archer':
+        starterItem = await Item.create({
+          name: 'Goblin Bow',
+          description: 'A crude bow taken from a goblin',
+          agilityBuff: 2,
+          userId: user.id,
+          characterId: character.id
+        });
+        break;
+    }
+    
     // Generate access token
     const token = generateToken(user);
     
-    // Return user and tokens
+    // Return user, character, and tokens
     res.status(201).json({
       user: {
         id: user.id,
@@ -74,6 +118,17 @@ const register = async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName
+      },
+      character: {
+        id: character.id,
+        name: character.name,
+        class: character.class,
+        stats: {
+          strength: character.strength + (starterItem.strengthBuff || 0),
+          agility: character.agility + (starterItem.agilityBuff || 0),
+          intelligence: character.intelligence + (starterItem.intelligenceBuff || 0)
+        },
+        equippedItems: [starterItem]
       },
       token,
       refreshToken

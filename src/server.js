@@ -42,6 +42,30 @@ io.on('connection', (socket) => {
     console.log(`Client unsubscribed from inventory updates for user ${userId}`);
   });
   
+  // Join a room for a specific user (for character updates)
+  socket.on('subscribeToUser', (userId) => {
+    socket.join(`user-${userId}`);
+    console.log(`Client subscribed to updates for user ${userId}`);
+  });
+  
+  // Leave a user room
+  socket.on('unsubscribeFromUser', (userId) => {
+    socket.leave(`user-${userId}`);
+    console.log(`Client unsubscribed from updates for user ${userId}`);
+  });
+  
+  // Join a room for a specific character
+  socket.on('subscribeToCharacter', (characterId) => {
+    socket.join(`character-${characterId}`);
+    console.log(`Client subscribed to updates for character ${characterId}`);
+  });
+  
+  // Leave a character room
+  socket.on('unsubscribeFromCharacter', (characterId) => {
+    socket.leave(`character-${characterId}`);
+    console.log(`Client unsubscribed from updates for character ${characterId}`);
+  });
+  
   socket.on('disconnect', () => {
     console.log('Client disconnected');
   });
